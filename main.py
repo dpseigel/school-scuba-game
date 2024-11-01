@@ -52,25 +52,44 @@ def input():
     building_player.move(pygame.Vector2(x_dir, y_dir))
     swimming_player.move(pygame.Vector2(x_dir, y_dir))
 
+
+#***UPDATE FUNCTIONS***
+
 #Main Looping Function
 def update():
     input()
+    if game_var.game_state == 1:
+        #Removing All Enemies From the list
+        enemies.clear()
+        #Making the Stations Show up
+        for up_station in upgrade_stations:
+            up_station.show()
+        building_update()
+    elif game_var.game_state == 2:
+        #Hiding them all when game starts
+        for up_station in upgrade_stations:
+            up_station.hide()
+        swimming_update()
+
+
+def building_update():
     check_upgrade_station_collision(False)
     #Running update function on player and all sprites
     building_player.update()
-    swimming_player.update()
     #Running updates on each upgrade station
     for up_station in upgrade_stations:
         up_station.update()
-    if game_var.game_state == 1:
-        enemies.clear()
-    elif game_var.game_state == 2:
-        swimming_update()
 
 def swimming_update():
+    swimming_player.update()
     for enemy in enemies:
         enemy.update()
     spawn_enemies()
+    check_enemy_collision()
+    check_enemy_location()
+
+
+#***DRAWING FUNCTIONS8**
 
 #Rendering everything to screen
 def draw():
@@ -81,19 +100,21 @@ def draw():
         draw_swimming()
     draw_hud()
 
+#Drawing The Building Scene
 def draw_building():
     for up_station in upgrade_stations:
         up_station.sprite.draw()
     #Player is rendered after so that it is rendered on top
     building_player.sprite.draw()
 
+#Drawing the Swimming Scene
 def draw_swimming():
     #Player is rendered after so that it is rendered on top
-    swimming_player.sprite.draw()
-
     for enemy in enemies:
         enemy.sprite.draw()
+    swimming_player.sprite.draw()
 
+#Drawing the HUD overtop
 def draw_hud():
     if game_var.game_state == 1:
         for up_station in upgrade_stations:
@@ -102,6 +123,10 @@ def draw_hud():
     else:
         pass
 
+
+#***SWIMMING SCENE***
+
+#Spawns enemies in the swimming scene
 def spawn_enemies():
     global enemy_timer
     enemy_timer -= 1
@@ -116,6 +141,22 @@ def spawn_enemies():
             enemy = characters.Enemy(8, world_scale, WIDTH, random.randint(0, HEIGHT), False)
         enemies.append(enemy)
         enemy_timer = enemy_timer_max
+
+def check_enemy_location():
+    for enemy in enemies:
+        if enemy.pos.x > WIDTH or enemy.pos.x < 0:
+            kill_enemy(enemy)
+
+def check_enemy_collision():
+    for enemy in enemies:
+        if enemy.sprite.colliderect(swimming_player.sprite):
+            kill_enemy(enemy)
+
+def kill_enemy(enemy):
+    enemies.remove(enemy)
+
+
+#***BUILDING SCENE***
 
 def check_upgrade_station_collision(using):
     global current_station_in_use
@@ -137,19 +178,6 @@ def check_upgrade_station_collision(using):
     elif not current_station_in_use == None:
         current_station_in_use.menu = None
         current_station_in_use = None
-
-def check_enemy_collision():
-
-    enemy_sprites = []
-
-    for enemy in enemies:
-        enemy_sprites.append(enemy.sprite)
-
-    hit = building_player.sprite.collidelist(enemy_sprites)
-    if hit != -1:
-        
-
-    
 
 def on_key_down(key):
     if key == keys.SPACE:

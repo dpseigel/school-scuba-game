@@ -28,7 +28,6 @@ class Enemy:
         if game_var.game_state == 2:
             self.movement()
 
-
 class BuildingPlayer:
     #Initialization function - has all player variables
     def __init__(self, speed,  scale,  x, y):

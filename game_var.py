@@ -6,4 +6,5 @@ player_speed_default = 10
 player_speed = 10
 
 def reset():
+    global player_speed
     player_speed = player_speed_default
