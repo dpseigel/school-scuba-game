@@ -1,5 +1,5 @@
 import pgzrun
-# import random
+import random
 from pgzhelper import *
 import pygame.math
 import characters
@@ -13,10 +13,12 @@ world_scale = 8
 WIDTH=800
 HEIGHT=600
 
-#All the actors are added so that they call the update and draw function
-actors = []
-#All the actors sprites are added to this list they are classes that have sprites in them
-actor_sprites = []
+#All Enemies are added to this list
+enemies = []
+
+enemy_timer_max = 100
+enemy_timer = 100
+
 #All the upgrade stations are added to here for collision detection
 upgrade_stations = []
 
@@ -29,35 +31,26 @@ upgrade_stations.append(test_upgrade_station)
 test_water_station = stations.SwimmingStartStation('upgrade_station', world_scale, 400, 300)
 upgrade_stations.append(test_water_station)
 
-#add all stations to actors
-for up_station in upgrade_stations:
-    actors.append(up_station)
 
-#Create Player - player is added (Not added to actors so that it is rendered on top)
+#Create Both Players - player is added 
 building_player = characters.BuildingPlayer(10, world_scale, 400, 300)
-
-#Create Player - player is added (Not added to actors so that it is rendered on top)
-swimming_player = characters.SwimmingPlayer(10, world_scale, 4, 400, 300)
-
-#Where all the sprites are added to the actor sprites list
-for actor in actors:
-    actor_sprites.append(actor.sprite)
+swimming_player = characters.SwimmingPlayer(world_scale, 4, 400, 300)
                 
 #Getting keyboard and phidget input
 def input():
-    x_pos, y_pos = 0, 0
+    x_dir, y_dir = 0, 0
     if keyboard.left:
-        x_pos -= 1
+        x_dir -= 1
     if keyboard.right:
-        x_pos += 1
+        x_dir += 1
     if keyboard.up:
-        y_pos -= 1
-    if keyboard.down:
-        y_pos += 1
+        y_dir -= 1
+    if keyboard.down and game_var.game_state == 1:
+        y_dir += 1
     
     #Moving Player with input
-    building_player.move(pygame.Vector2(x_pos, y_pos))
-    swimming_player.move(pygame.Vector2(x_pos, y_pos))
+    building_player.move(pygame.Vector2(x_dir, y_dir))
+    swimming_player.move(pygame.Vector2(x_dir, y_dir))
 
 #Main Looping Function
 def update():
@@ -66,20 +59,26 @@ def update():
     #Running update function on player and all sprites
     building_player.update()
     swimming_player.update()
-    for actor in actors:
-        actor.update()
+    #Running updates on each upgrade station
+    for up_station in upgrade_stations:
+        up_station.update()
+    if game_var.game_state == 1:
+        enemies.clear()
+    elif game_var.game_state == 2:
+        swimming_update()
+
+def swimming_update():
+    for enemy in enemies:
+        enemy.update()
+    spawn_enemies()
 
 #Rendering everything to screen
 def draw():
     screen.clear()
     if game_var.game_state == 1:
         draw_building()
-        for up_station in upgrade_stations:
-            up_station.show()
     else:
         draw_swimming()
-        for up_station in upgrade_stations:
-            up_station.hide()
     draw_hud()
 
 def draw_building():
@@ -87,6 +86,13 @@ def draw_building():
         up_station.sprite.draw()
     #Player is rendered after so that it is rendered on top
     building_player.sprite.draw()
+
+def draw_swimming():
+    #Player is rendered after so that it is rendered on top
+    swimming_player.sprite.draw()
+
+    for enemy in enemies:
+        enemy.sprite.draw()
 
 def draw_hud():
     if game_var.game_state == 1:
@@ -96,26 +102,54 @@ def draw_hud():
     else:
         pass
 
-def draw_swimming():
-    #Player is rendered after so that it is rendered on top
-    swimming_player.sprite.draw()
+def spawn_enemies():
+    global enemy_timer
+    enemy_timer -= 1
+    if enemy_timer == 0:
+        left = True
+        if random.randint(0, 1) == 1:
+            left = False
+        enemy = None
+        if left:
+            enemy = characters.Enemy(8, world_scale, 0, random.randint(0, HEIGHT), True)
+        else:
+            enemy = characters.Enemy(8, world_scale, WIDTH, random.randint(0, HEIGHT), False)
+        enemies.append(enemy)
+        enemy_timer = enemy_timer_max
 
 def check_upgrade_station_collision(using):
     global current_station_in_use
     #Check if it hit something
-    hit = building_player.sprite.collidelist(actor_sprites)
+
+    upgrade_station_sprites = []
+
+    for up_station in upgrade_stations:
+        upgrade_station_sprites.append(up_station.sprite)
+
+    hit = building_player.sprite.collidelist(upgrade_station_sprites)
     if hit != -1:
         #Checking if they hit an upgrade station
         for up_station in upgrade_stations:
-            if up_station.sprite == actor_sprites[hit]:
-                station = up_station
+            if up_station.sprite == upgrade_station_sprites[hit]:
                 if using:
-                    station.use()
-                    current_station_in_use = station
+                    up_station.use()
+                    current_station_in_use = up_station
     elif not current_station_in_use == None:
-        station.menu = None
-        station.menu_on = False
+        current_station_in_use.menu = None
         current_station_in_use = None
+
+def check_enemy_collision():
+
+    enemy_sprites = []
+
+    for enemy in enemies:
+        enemy_sprites.append(enemy.sprite)
+
+    hit = building_player.sprite.collidelist(enemy_sprites)
+    if hit != -1:
+        
+
+    
 
 def on_key_down(key):
     if key == keys.SPACE:

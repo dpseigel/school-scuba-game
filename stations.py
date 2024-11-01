@@ -14,7 +14,6 @@ class Station:
         self.sprite = Actor(sprite_image)
         self.sprite.scale = scale
         self.menu = None
-        self.menu_on = False
     
     def show(self):
         self.pos = self.start_pos
@@ -26,18 +25,17 @@ class Station:
         print("using")
 
     def update(self):
+        if game_var.game_state == 1:
+            self.show()
+        else:
+            self.hide()
         self.sprite.x = self.pos.x
         self.sprite.y = self.pos.y
 
 #Can add custom code to each one so that there is a specific use function
 class HiringStation(Station):
     def use(self):
-        if not self.menu_on:
-            self.menu = menu.Menu("HIRE", "BUY", 50)
-        else:
-            self.menu = None
-        self.menu_on = not self.menu_on
-
+        self.menu = menu.Menu("HIRE", "BUY", 50)
 
 class EquipmentStation(Station):
     def use(self):
@@ -50,3 +48,4 @@ class WaterCleaningStation(Station):
 class SwimmingStartStation(Station):
     def use(self):
         game_var.game_state = 2
+        game_var.reset()
