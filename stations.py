@@ -25,10 +25,6 @@ class Station:
         print("using")
 
     def update(self):
-        if game_var.game_state == 1:
-            self.show()
-        else:
-            self.hide()
         self.sprite.x = self.pos.x
         self.sprite.y = self.pos.y
 

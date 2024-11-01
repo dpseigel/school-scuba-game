@@ -7,11 +7,17 @@ import stations
 import game_var
 
 
+#***GAME VARIABLES***
+
 world_scale = 8
 
 #Game Screen dimensions
 WIDTH=800
 HEIGHT=600
+
+
+
+#***ENEMY VARIABLES***
 
 #All Enemies are added to this list
 enemies = []
@@ -19,9 +25,11 @@ enemies = []
 enemy_timer_max = 100
 enemy_timer = 100
 
+
+#***STATION VARIABLES***
+
 #All the upgrade stations are added to here for collision detection
 upgrade_stations = []
-
 current_station_in_use = None
 
 #All Upgrade station are instantiated here
@@ -31,6 +39,8 @@ upgrade_stations.append(test_upgrade_station)
 test_water_station = stations.SwimmingStartStation('upgrade_station', world_scale, 400, 300)
 upgrade_stations.append(test_water_station)
 
+
+#***PLAYER VARIABLES***
 
 #Create Both Players - player is added 
 building_player = characters.BuildingPlayer(10, world_scale, 400, 300)
@@ -71,7 +81,6 @@ def update():
             up_station.hide()
         swimming_update()
 
-
 def building_update():
     check_upgrade_station_collision(False)
     #Running update function on player and all sprites
@@ -98,7 +107,7 @@ def draw():
         draw_building()
     else:
         draw_swimming()
-    draw_hud()
+    draw_hud(screen)
 
 #Drawing The Building Scene
 def draw_building():
@@ -115,9 +124,10 @@ def draw_swimming():
     swimming_player.sprite.draw()
 
 #Drawing the HUD overtop
-def draw_hud():
+def draw_hud(screen):
     if game_var.game_state == 1:
         for up_station in upgrade_stations:
+            print(up_station.menu)
             if up_station.menu:
                 up_station.menu.draw(screen)
     else:
@@ -162,22 +172,34 @@ def check_upgrade_station_collision(using):
     global current_station_in_use
     #Check if it hit something
 
-    upgrade_station_sprites = []
-
     for up_station in upgrade_stations:
-        upgrade_station_sprites.append(up_station.sprite)
-
-    hit = building_player.sprite.collidelist(upgrade_station_sprites)
-    if hit != -1:
-        #Checking if they hit an upgrade station
-        for up_station in upgrade_stations:
-            if up_station.sprite == upgrade_station_sprites[hit]:
-                if using:
-                    up_station.use()
-                    current_station_in_use = up_station
-    elif not current_station_in_use == None:
+        if building_player.sprite.colliderect(up_station.sprite):
+            if using:
+                up_station.use()
+                current_station_in_use = up_station
+            return
+    if current_station_in_use:
         current_station_in_use.menu = None
         current_station_in_use = None
+    # global current_station_in_use
+    # #Check if it hit something
+
+    # upgrade_station_sprites = []
+
+    # for up_station in upgrade_stations:
+    #     upgrade_station_sprites.append(up_station.sprite)
+
+    # hit = building_player.sprite.collidelist(upgrade_station_sprites)
+    # if hit != -1:
+    #     #Checking if they hit an upgrade station
+    #     for up_station in upgrade_stations:
+    #         if up_station.sprite == upgrade_station_sprites[hit]:
+    #             if using:
+    #                 up_station.use()
+    #                 current_station_in_use = up_station
+    # elif not current_station_in_use == None:
+    #     current_station_in_use.menu = None
+    #     current_station_in_use = None
 
 def on_key_down(key):
     if key == keys.SPACE:
