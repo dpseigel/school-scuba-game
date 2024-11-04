@@ -10,10 +10,13 @@ import game_var
 #***GAME VARIABLES***
 
 world_scale = 8
+text_size = 50
 
 #Game Screen dimensions
 WIDTH=800
 HEIGHT=600
+game_var.screen_height = HEIGHT
+game_var.screen_width = WIDTH
 
 
 
@@ -25,6 +28,8 @@ enemies = []
 enemy_timer_max = 100
 enemy_timer = 100
 
+#***BOTTLE VARIABLES***
+bottles = []
 
 #***STATION VARIABLES***
 
@@ -47,6 +52,7 @@ building_player = characters.BuildingPlayer(10, world_scale, 400, 300)
 swimming_player = characters.SwimmingPlayer(world_scale, 4, 400, 300)
                 
 #Getting keyboard and phidget input
+
 def input():
     x_dir, y_dir = 0, 0
     if keyboard.left:
@@ -61,7 +67,6 @@ def input():
     #Moving Player with input
     building_player.move(pygame.Vector2(x_dir, y_dir))
     swimming_player.move(pygame.Vector2(x_dir, y_dir))
-
 
 #***UPDATE FUNCTIONS***
 
@@ -90,12 +95,19 @@ def building_update():
         up_station.update()
 
 def swimming_update():
+    spawn_bottles()
     swimming_player.update()
+    for bottle in bottles:
+        bottle.update()
     for enemy in enemies:
         enemy.update()
     spawn_enemies()
     check_enemy_collision()
     check_enemy_location()
+    check_bottle_collision()
+    game_var.game_timer -= 1
+    if game_var.game_timer <= 0:
+        game_var.game_state = 1
 
 
 #***DRAWING FUNCTIONS8**
@@ -118,6 +130,8 @@ def draw_building():
 
 #Drawing the Swimming Scene
 def draw_swimming():
+    for bottle in bottles:
+        bottle.sprite.draw()
     #Player is rendered after so that it is rendered on top
     for enemy in enemies:
         enemy.sprite.draw()
@@ -131,11 +145,12 @@ def draw_hud(screen):
             if up_station.menu:
                 up_station.menu.draw(screen)
     else:
-        pass
+        screen.draw.text(str(game_var.game_timer), (300, 100), color=game_var.text_colour, fontsize=text_size, fontname=game_var.text_font)
 
 
 #***SWIMMING SCENE***
 
+#ENEMIES
 #Spawns enemies in the swimming scene
 def spawn_enemies():
     global enemy_timer
@@ -165,6 +180,20 @@ def check_enemy_collision():
 def kill_enemy(enemy):
     enemies.remove(enemy)
 
+#BOTTLES
+def check_bottle_collision():
+    for bottle in bottles:
+        if bottle.sprite.colliderect(swimming_player.sprite):
+            collect_bottle(bottle)
+
+def collect_bottle(bottle):
+    game_var.bottle_count += 1
+    bottles.remove(bottle)
+
+def spawn_bottles():
+    if len(bottles) < game_var.bottle_spawn_amount:
+        bottle_instance = characters.Bottle(world_scale, WIDTH, HEIGHT)
+        bottles.append(bottle_instance)
 
 #***BUILDING SCENE***
 
@@ -181,25 +210,6 @@ def check_upgrade_station_collision(using):
     if current_station_in_use:
         current_station_in_use.menu = None
         current_station_in_use = None
-    # global current_station_in_use
-    # #Check if it hit something
-
-    # upgrade_station_sprites = []
-
-    # for up_station in upgrade_stations:
-    #     upgrade_station_sprites.append(up_station.sprite)
-
-    # hit = building_player.sprite.collidelist(upgrade_station_sprites)
-    # if hit != -1:
-    #     #Checking if they hit an upgrade station
-    #     for up_station in upgrade_stations:
-    #         if up_station.sprite == upgrade_station_sprites[hit]:
-    #             if using:
-    #                 up_station.use()
-    #                 current_station_in_use = up_station
-    # elif not current_station_in_use == None:
-    #     current_station_in_use.menu = None
-    #     current_station_in_use = None
 
 def on_key_down(key):
     if key == keys.SPACE:
