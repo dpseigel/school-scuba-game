@@ -11,6 +11,8 @@ bottle_count = 0
 
 total_old_bottle_count = 0
 
+round = 0
+
 hired_people = 1
 person_rounds = 1
 bottle_per_person = 3
@@ -36,6 +38,12 @@ def reset_game():
     global player_speed, game_timer
     game_timer = game_timer_reset
     bottle_count = 0
+    money = 0
+    person_speed = 1
+    highscore = 0
+    total_old_bottle_count = 0
+    bottle_spawn_amount = 5
+    round = 0
     player_speed = player_speed_default
 
 def reset():

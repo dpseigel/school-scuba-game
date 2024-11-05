@@ -6,6 +6,10 @@ import characters
 import stations
 import game_var
 
+from Phidget22.Phidget import *
+from Phidget22.Devices.VoltageRatioInput import *
+from Phidget22.Devices.DigitalInput import *
+
 #***GAME VARIABLES***
 
 world_scale = 8
@@ -17,6 +21,7 @@ HEIGHT=600
 game_var.screen_height = HEIGHT
 game_var.screen_width = WIDTH
 
+phidgets = True
 
 #***ENEMY VARIABLES***
 
@@ -59,14 +64,24 @@ swimming_player = characters.SwimmingPlayer(world_scale, 4, 400, 300)
 
 def input():
     x_dir, y_dir = 0, 0
-    if keyboard.left:
-        x_dir -= 1
-    if keyboard.right:
-        x_dir += 1
-    if keyboard.up:
-        y_dir -= 1
-    if keyboard.down and game_var.game_state == 1:
-        y_dir += 1
+
+    if phidgets:
+        x_dir, y_dir = horizontal.getVoltageRatio(), -vertical.getVoltageRatio()
+        if x_dir < 0.1 and x_dir > -0.1:
+            x_dir = 0
+        if y_dir < 0.1 and y_dir > -0.1:
+            y_dir = 0
+    else:
+        #Keyboard input
+        if keyboard.left or keyboard.A:
+            x_dir -= 1
+        if keyboard.right or keyboard.D:
+            x_dir += 1
+        if keyboard.up or keyboard.W:
+            y_dir -= 1
+        if keyboard.down or keyboard.S:
+            if game_var.game_state == 1:
+                y_dir += 1
     
     #Moving Player with input
     building_player.move(pygame.Vector2(x_dir, y_dir))
@@ -118,6 +133,7 @@ def swimming_update():
         game_var.game_state = 1
 
 def end_session():
+    #Money calculations - adds money into account per person and per
     game_var.total_old_bottle_count += game_var.bottle_count
     new_bottle_count = 0
     hired_people_count = game_var.hired_people * game_var.person_speed
@@ -128,10 +144,19 @@ def end_session():
     game_var.money += new_bottle_count * game_var.money_per_bottle
     game_var.bottle_count = 0
     game_var.highscore += new_bottle_count
+    game_var.round += 1
     if game_var.money < game_var.hired_people * game_var.money_per_person:
-        print("you failed")
+        lose()
     else:
         game_var.money -= game_var.hired_people * game_var.money_per_person
+    if game_var.round >= 10:
+        win()
+
+def win():
+    print("you win score: " + str(game_var.highscore))
+
+def lose():
+    print("you lose" + str(game_var.highscore))
 
 #***DRAWING FUNCTIONS**
 
@@ -140,7 +165,7 @@ def draw():
     screen.clear()
     if game_var.game_state == 1:
         draw_building()
-    else:
+    elif game_var.game_state == 2:
         draw_swimming()
     draw_hud(screen)
 
@@ -164,7 +189,7 @@ def draw_swimming():
 def draw_hud(screen):
     if game_var.game_state == 1:
         #Displaying the scores in the building state
-        screen.draw.text("HIGHSCORE: " + str(game_var.highscore) + "\nMONEY: " + str(game_var.money) + "\nOLD BOTTLES: " + str(game_var.total_old_bottle_count), (20, 20), color=game_var.text_colour, fontsize=text_size, fontname=game_var.text_font)
+        screen.draw.text("ROUND: " + str(game_var.round) + "\nSCORE: " + str(game_var.highscore) + "\nMONEY: " + str(game_var.money) + "\nOLD BOTTLES: " + str(game_var.total_old_bottle_count), (20, 20), color=game_var.text_colour, fontsize=text_size, fontname=game_var.text_font)
         for up_station in upgrade_stations:
             #Showing the menus when using them on the stations
             if up_station.menu:
@@ -172,8 +197,15 @@ def draw_hud(screen):
         #Show stats of current station
         if building_player.menu:
              building_player.menu.draw(screen)
-    else:
+    elif game_var.game_state == 2:
         screen.draw.text(str(game_var.game_timer) + "\n" + str(game_var.bottle_count), (20, 20), color=game_var.text_colour, fontsize=text_size, fontname=game_var.text_font)
+    elif game_var.game_state == 3:
+        screen.draw.text("YOU LOSE", (20, 20), color=game_var.text_colour, fontsize=text_size, fontname=game_var.text_font)
+    else:
+        screen.draw.text("YOU WIN", (20, 20), color=game_var.text_colour, fontsize=text_size, fontname=game_var.text_font)
+
+
+
 
 
 #***SWIMMING SCENE***
@@ -195,30 +227,36 @@ def spawn_enemies():
         enemies.append(enemy)
         enemy_timer = enemy_timer_max
 
+#If enemy is off screen remove it
 def check_enemy_location():
     for enemy in enemies:
         if enemy.pos.x > WIDTH or enemy.pos.x < 0:
             enemies.remove(enemy)
 
+#Check if it hits player - if so remove enemy
 def check_enemy_collision():
     for enemy in enemies:
         if enemy.sprite.colliderect(swimming_player.sprite):
             kill_enemy(enemy)
 
+#Maybe add animation later
 def kill_enemy(enemy):
     game_var.bottle_count -= 10
     enemies.remove(enemy)
 
 #BOTTLES
+#Check if player is hitting the bottle if so collect it
 def check_bottle_collision():
     for bottle in bottles:
         if bottle.sprite.colliderect(swimming_player.sprite):
             collect_bottle(bottle)
 
+#collecting bottle - maybe add animation later
 def collect_bottle(bottle):
     game_var.bottle_count += 1
     bottles.remove(bottle)
 
+#Spawn bottles around the game - adds new ones if player collects one
 def spawn_bottles():
     if len(bottles) < game_var.bottle_spawn_amount:
         bottle_instance = characters.Bottle(world_scale, WIDTH, HEIGHT)
@@ -247,12 +285,34 @@ def check_upgrade_station_collision(using):
 
 def on_key_down(key):
     if key == keys.SPACE:
-        check_upgrade_station_collision(True)
-    # if key == keys.E:
-    #     if game_var.game_state == 1:
-    #         game_var.game_state = 2
-    #     else:
-    #         game_var.game_state = 1
+        buy_button()
+    if key == keys.E:
+        if game_var.game_state == 1:
+            game_var.game_state = 2
+        else:
+            end_session()
+            game_var.game_state = 1
+
+def buy_button():
+    check_upgrade_station_collision(True)
+
+def onRedButton_StateChange(self, state):
+    if(state):
+        buy_button()
+        
+if phidgets:
+    #Create, Address, Subscribe to Events and Open
+    redButton = DigitalInput()
+    redButton.setIsHubPortDevice(True)
+    redButton.setHubPort(2)
+    redButton.setOnStateChangeHandler(onRedButton_StateChange)
+    redButton.openWaitForAttachment(1000)
+    vertical = VoltageRatioInput()
+    horizontal = VoltageRatioInput()
+    vertical.setChannel(0)
+    horizontal.setChannel(1)
+    vertical.openWaitForAttachment(1000)
+    horizontal.openWaitForAttachment(1000)
 
 
 pgzrun.go() # Must be last line

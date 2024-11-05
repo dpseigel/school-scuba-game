@@ -11,8 +11,8 @@ class Menu:
         self.text_size = text_size
     
     def draw(self, screen):
-        screen.draw.text(self.title, (230, 150), color=game_var.text_colour, fontsize=self.text_size, fontname=game_var.text_font)
-        screen.draw.text(self.button_text, (230, 200), color=game_var.text_colour, fontsize=self.text_size/1.5, fontname=game_var.text_font)
+        screen.draw.text(self.title, (230, 200), color=game_var.text_colour, fontsize=self.text_size, fontname=game_var.text_font)
+        screen.draw.text(self.button_text, (230, 250), color=game_var.text_colour, fontsize=self.text_size/1.5, fontname=game_var.text_font)
 
     
     def update(self):

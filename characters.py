@@ -80,6 +80,14 @@ class BuildingPlayer:
         self.sprite.y = self.pos.y
     
     def update(self):
+        if self.pos.x < -10:
+            self.pos.x = game_var.screen_width
+        elif self.pos.x > game_var.screen_width + 10:
+            self.pos.x = 0
+        elif self.pos.y > game_var.screen_height + 10:
+            self.pos.y = 0
+        elif self.pos.y < -10:
+            self.pos.y = game_var.screen_height
         if game_var.game_state == 1:
             self.movement()
 
