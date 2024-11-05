@@ -3,6 +3,7 @@ from pgzhelper import *
 import pygame.math
 import game_var
 import random
+import menu
 
 
 #*** ALL ACTORS MUST HAVE UPDATE FUNCTION***
@@ -53,11 +54,25 @@ class BuildingPlayer:
         self.pos = pygame.Vector2(x, y)
         self.sprite = Actor('player')
         self.sprite.scale = scale
+        self.menu = None
     
     #Receives input from the main script - moves pos variable
     def move(self, direction):
         if game_var.game_state == 1:
             self.pos += direction * self.speed
+    
+    def show_menu(self, screen, value):
+        if not value == 0:
+            if value == 1:
+                self.menu = menu.StatsMenu("HP: " + str(game_var.hired_people), 25, self.pos)
+            elif value == 2:
+                self.menu = menu.StatsMenu("EQ: " + str(game_var.player_speed), 25, self.pos)
+            elif value == 3:
+                self.menu = menu.StatsMenu("WC: " + str(game_var.person_speed), 25, self.pos)
+            else:
+                self.menu = menu.StatsMenu("START", 25, self.pos)
+        else:
+            self.menu = None
 
     #Actually moves the sprite
     def movement(self):

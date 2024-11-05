@@ -9,7 +9,7 @@ import game_var
 #***GAME VARIABLES***
 
 world_scale = 8
-text_size = 50
+text_size = 40
 
 #Game Screen dimensions
 WIDTH=800
@@ -163,15 +163,17 @@ def draw_swimming():
 #Drawing the HUD overtop
 def draw_hud(screen):
     if game_var.game_state == 1:
-        screen.draw.text("UB: " + str(game_var.total_old_bottle_count) + " PPL: " + str(game_var.hired_people), (0, 0), color=game_var.text_colour, fontsize=text_size, fontname=game_var.text_font)
-        screen.draw.text("M: " + str(game_var.money) + " HS: " + str(game_var.highscore), (0, 60), color=game_var.text_colour, fontsize=text_size, fontname=game_var.text_font)
-        screen.draw.text("PS: " + str(game_var.player_speed), (0, 120), color=game_var.text_colour, fontsize=text_size, fontname=game_var.text_font)
+        #Displaying the scores in the building state
+        screen.draw.text("HIGHSCORE: " + str(game_var.highscore) + "\nMONEY: " + str(game_var.money) + "\nOLD BOTTLES: " + str(game_var.total_old_bottle_count), (20, 20), color=game_var.text_colour, fontsize=text_size, fontname=game_var.text_font)
         for up_station in upgrade_stations:
+            #Showing the menus when using them on the stations
             if up_station.menu:
                 up_station.menu.draw(screen)
+        #Show stats of current station
+        if building_player.menu:
+             building_player.menu.draw(screen)
     else:
-        screen.draw.text(str(game_var.bottle_count), (300, 200), color=game_var.text_colour, fontsize=text_size/1.5, fontname=game_var.text_font)
-        screen.draw.text(str(game_var.game_timer), (300, 100), color=game_var.text_colour, fontsize=text_size, fontname=game_var.text_font)
+        screen.draw.text(str(game_var.game_timer) + "\n" + str(game_var.bottle_count), (20, 20), color=game_var.text_colour, fontsize=text_size, fontname=game_var.text_font)
 
 
 #***SWIMMING SCENE***
@@ -228,11 +230,16 @@ def check_upgrade_station_collision(using):
     global current_station_in_use
     #Check if it hit something
 
+    #HIDE PLAYER MENU
+    building_player.show_menu(screen, 0)
     for up_station in upgrade_stations:
         if building_player.sprite.colliderect(up_station.sprite):
+            if up_station:
+                building_player.show_menu(screen, up_station.value())
             if using:
                 up_station.use()
                 current_station_in_use = up_station
+                #Show current status of stations above player
             return
     if current_station_in_use:
         current_station_in_use.menu = None
@@ -241,11 +248,11 @@ def check_upgrade_station_collision(using):
 def on_key_down(key):
     if key == keys.SPACE:
         check_upgrade_station_collision(True)
-    if key == keys.E:
-        if game_var.game_state == 1:
-            game_var.game_state = 2
-        else:
-            game_var.game_state = 1
+    # if key == keys.E:
+    #     if game_var.game_state == 1:
+    #         game_var.game_state = 2
+    #     else:
+    #         game_var.game_state = 1
 
 
 pgzrun.go() # Must be last line

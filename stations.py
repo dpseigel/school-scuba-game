@@ -35,9 +35,9 @@ class HiringStation(Station):
         if self.menu:
             game_var.hired_people += 1
         else:
-            self.menu = menu.Menu("HIRE", "BUY", 50)
+            self.menu = menu.Menu("HIRE PEOPLE", "SIGN", 50)
 
-    def value():
+    def value(self):
         return 1
     
 class EquipmentStation(Station):
@@ -49,7 +49,7 @@ class EquipmentStation(Station):
         else:
             self.menu = menu.Menu("UPGRADE EQ", "BUY 5$", 50)
     
-    def value():
+    def value(self):
         return 2
 
 class WaterCleaningStation(Station):
@@ -60,14 +60,13 @@ class WaterCleaningStation(Station):
                 game_var.person_speed += 1
         else:
             self.menu = menu.Menu("UPGRADE WC", "BUY 20$", 50)
-    def value():
+    def value(self):
         return 3
 
 class SwimmingStartStation(Station):
     def use(self):
-        print("yoooo")
         game_var.game_state = 2
         game_var.reset()
     
-    def value():
+    def value(self):
         return 4
