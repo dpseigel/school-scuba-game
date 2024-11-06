@@ -9,6 +9,7 @@ import game_var
 from Phidget22.Phidget import *
 from Phidget22.Devices.VoltageRatioInput import *
 from Phidget22.Devices.DigitalInput import *
+from Phidget22.Devices.DigitalOutput import *
 
 #***GAME VARIABLES***
 
@@ -58,9 +59,13 @@ upgrade_stations.append(water_station)
 #Create Both Players - player is added 
 building_player = characters.BuildingPlayer(10, world_scale, 400, 300)
 swimming_player = characters.SwimmingPlayer(world_scale, 4, 400, 300)
-                
-#Getting keyboard and phidget input
 
+
+redLED = None
+vertical = None
+horizontal = None
+
+#Getting keyboard and phidget input
 
 def input():
     x_dir, y_dir = 0, 0
@@ -204,10 +209,6 @@ def draw_hud(screen):
     else:
         screen.draw.text("YOU WIN", (20, 20), color=game_var.text_colour, fontsize=text_size, fontname=game_var.text_font)
 
-
-
-
-
 #***SWIMMING SCENE***
 
 #ENEMIES
@@ -269,13 +270,14 @@ def check_upgrade_station_collision(using):
     #Check if it hit something
 
     #HIDE PLAYER MENU
-    building_player.show_menu(screen, 0)
+    building_player.show_menu(screen, None)
     for up_station in upgrade_stations:
         if building_player.sprite.colliderect(up_station.sprite):
             if up_station:
                 building_player.show_menu(screen, up_station.value())
             if using:
                 up_station.use()
+
                 current_station_in_use = up_station
                 #Show current status of stations above player
             return
@@ -297,22 +299,29 @@ def buy_button():
     check_upgrade_station_collision(True)
 
 def onRedButton_StateChange(self, state):
+    redLED.setState(state)
     if(state):
         buy_button()
         
 if phidgets:
-    #Create, Address, Subscribe to Events and Open
+    #Button
     redButton = DigitalInput()
     redButton.setIsHubPortDevice(True)
     redButton.setHubPort(2)
     redButton.setOnStateChangeHandler(onRedButton_StateChange)
     redButton.openWaitForAttachment(1000)
+    #Joystick
     vertical = VoltageRatioInput()
     horizontal = VoltageRatioInput()
     vertical.setChannel(0)
     horizontal.setChannel(1)
     vertical.openWaitForAttachment(1000)
     horizontal.openWaitForAttachment(1000)
-
+    
+    #RedLED
+    redLED = DigitalOutput()
+    redLED.setHubPort(3)
+    redLED.setIsHubPortDevice(True)
+    redLED.openWaitForAttachment(1000)
 
 pgzrun.go() # Must be last line
