@@ -1,7 +1,10 @@
 #State of the game - changing scenes
+#0 - Tutorial
 #1 - Inside building
 #2 - In the river
-game_state = 1
+#3 - Lose
+#4 - Win
+game_state = 0
 
 player_speed_default = 10
 player_speed = 10
@@ -12,6 +15,10 @@ bottle_count = 0
 total_old_bottle_count = 0
 
 round = 0
+round_end = 10
+
+enemy_timer_max = 100
+enemy_timer = 100
 
 hired_people = 1
 person_rounds = 1

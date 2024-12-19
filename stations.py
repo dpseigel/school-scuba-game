@@ -62,11 +62,17 @@ class WaterCleaningStation(Station):
             self.menu = menu.Menu("UPGRADE WC", "BUY 20$", 50)
     def value(self):
         return 3
+    
+    
 
 class SwimmingStartStation(Station):
     def use(self):
         game_var.game_state = 2
         game_var.reset()
+    def update(self):
+        self.sprite.x = self.pos.x
+        self.sprite.y = self.pos.y
+        self.sprite.angle += 1
     
     def value(self):
         return 4

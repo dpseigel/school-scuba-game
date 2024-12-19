@@ -29,7 +29,10 @@ class Enemy:
         self.left = left
         self.speed = speed
         self.pos = pygame.Vector2(x, y)
-        self.sprite = Actor('enemy')
+        if self.left:
+            self.sprite = Actor('fish')
+        else:
+            self.sprite = Actor('fish_left')
         self.sprite.scale = scale
         self.movement()
     
@@ -64,12 +67,12 @@ class BuildingPlayer:
     def show_menu(self, screen, value):
         if not value == 0:
             if value == 1:
-                self.menu = menu.StatsMenu("HP: " + str(game_var.hired_people), 25, self.pos)
+                self.menu = menu.StatsMenu("HIRE: " + str(game_var.hired_people), 25, self.pos)
             elif value == 2:
-                self.menu = menu.StatsMenu("EQ: " + str(game_var.player_speed), 25, self.pos)
+                self.menu = menu.StatsMenu("EQUIP: " + str(game_var.player_speed), 25, self.pos)
             elif value == 3:
-                self.menu = menu.StatsMenu("WC: " + str(game_var.person_speed), 25, self.pos)
-            else:
+                self.menu = menu.StatsMenu("WATER: " + str(game_var.person_speed), 25, self.pos)
+            elif value == 4:
                 self.menu = menu.StatsMenu("START", 25, self.pos)
         else:
             self.menu = None
@@ -95,8 +98,9 @@ class SwimmingPlayer:
     #Initialization function - has all player variables
     def __init__(self, scale, gravity,  x, y):
         self.pos = pygame.Vector2(x, y)
-        self.sprite = Actor('player')
-        self.sprite.scale = scale
+        self.sprite = Actor('player_right')
+        self.scale = scale
+        self.sprite.scale = self.scale
         self.gravity = gravity
     
     #Receives input from the main script - moves pos variable
@@ -104,6 +108,17 @@ class SwimmingPlayer:
         if game_var.game_state == 2:
             self.pos += direction * game_var.player_speed
             self.pos.y += self.gravity
+
+    def left(self):
+        self.sprite = Actor('player_left')
+        self.movement
+        self.sprite.scale = self.scale
+
+
+    def right(self):
+        self.sprite = Actor("player_right")
+        self.movement
+        self.sprite.scale = self.scale
 
     #Actually moves the sprite
     def movement(self):

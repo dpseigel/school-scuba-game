@@ -22,15 +22,14 @@ HEIGHT=600
 game_var.screen_height = HEIGHT
 game_var.screen_width = WIDTH
 
-phidgets = True
+phidgets = False
 
 #***ENEMY VARIABLES***
 
 #All Enemies are added to this list
 enemies = []
 
-enemy_timer_max = 100
-enemy_timer = 100
+
 
 #***BOTTLE VARIABLES***
 bottles = []
@@ -42,29 +41,32 @@ upgrade_stations = []
 current_station_in_use = None
 
 #All Upgrade station are instantiated here
-hiring_station = stations.HiringStation('upgrade_station', world_scale, WIDTH/4, HEIGHT/2)
+hiring_station = stations.HiringStation('upgrade_station_hire_people', world_scale, 0 + 60, HEIGHT/2)
 upgrade_stations.append(hiring_station)
 
-equipment_station = stations.EquipmentStation('upgrade_station', world_scale, WIDTH/4 * 3, HEIGHT/2)
+equipment_station = stations.EquipmentStation('upgrade_station_equipment', world_scale, WIDTH-60, HEIGHT/2)
 upgrade_stations.append(equipment_station)
 
-water_cleaning_station = stations.WaterCleaningStation('upgrade_station', world_scale, WIDTH/2, HEIGHT/4 * 3)
+water_cleaning_station = stations.WaterCleaningStation('upgrade_station_water', world_scale, WIDTH/2, HEIGHT-60)
 upgrade_stations.append(water_cleaning_station)
 
-water_station = stations.SwimmingStartStation('upgrade_station', world_scale, WIDTH/2, HEIGHT/2)
+water_station = stations.SwimmingStartStation('center_pool', world_scale-3, WIDTH/2, HEIGHT/2-60)
 upgrade_stations.append(water_station)
 
 #***PLAYER VARIABLES***
 
 #Create Both Players - player is added 
-building_player = characters.BuildingPlayer(10, world_scale, 400, 300)
+building_player = characters.BuildingPlayer(10, world_scale, 400, 200)
 swimming_player = characters.SwimmingPlayer(world_scale, 4, 400, 300)
 
+background = Actor("building_background")
+background.x = WIDTH/2
+background.y = HEIGHT/2
+background.scale = 8
 
 redLED = None
 vertical = None
 horizontal = None
-
 #Getting keyboard and phidget input
 
 def input():
@@ -72,6 +74,11 @@ def input():
 
     if phidgets:
         x_dir, y_dir = horizontal.getVoltageRatio(), -vertical.getVoltageRatio()
+        if x_dir > 0:
+            swimming_player.right()
+        elif x_dir < 0:
+            swimming_player.left()
+
         if x_dir < 0.1 and x_dir > -0.1:
             x_dir = 0
         if y_dir < 0.1 and y_dir > -0.1:
@@ -80,8 +87,10 @@ def input():
         #Keyboard input
         if keyboard.left or keyboard.A:
             x_dir -= 1
+            swimming_player.left()
         if keyboard.right or keyboard.D:
             x_dir += 1
+            swimming_player.right()
         if keyboard.up or keyboard.W:
             y_dir -= 1
         if keyboard.down or keyboard.S:
@@ -134,11 +143,13 @@ def swimming_update():
     check_bottle_collision()
     game_var.game_timer -= 1
     if game_var.game_timer <= 0:
-        end_session()
         game_var.game_state = 1
+        end_session()
+        game_var.game_timer = 1
 
 def end_session():
     #Money calculations - adds money into account per person and per
+    game_var.enemy_timer_max -= 5
     game_var.total_old_bottle_count += game_var.bottle_count
     new_bottle_count = 0
     hired_people_count = game_var.hired_people * game_var.person_speed
@@ -154,14 +165,16 @@ def end_session():
         lose()
     else:
         game_var.money -= game_var.hired_people * game_var.money_per_person
-    if game_var.round >= 10:
+    if game_var.round >= game_var.round_end:
         win()
 
 def win():
-    print("you win score: " + str(game_var.highscore))
+    game_var.game_state = 4
 
 def lose():
-    print("you lose" + str(game_var.highscore))
+    game_var.game_state = 3
+    
+
 
 #***DRAWING FUNCTIONS**
 
@@ -176,6 +189,11 @@ def draw():
 
 #Drawing The Building Scene
 def draw_building():
+    background = Actor("building_background")
+    background.x = WIDTH/2
+    background.y = HEIGHT/2
+    background.scale = 8
+    background.draw()
     for up_station in upgrade_stations:
         up_station.sprite.draw()
     #Player is rendered after so that it is rendered on top
@@ -183,6 +201,11 @@ def draw_building():
 
 #Drawing the Swimming Scene
 def draw_swimming():
+    background = Actor("ocean_background")
+    background.x = WIDTH/2
+    background.y = HEIGHT/2
+    background.scale = 8
+    background.draw()
     for bottle in bottles:
         bottle.sprite.draw()
     #Player is rendered after so that it is rendered on top
@@ -192,6 +215,19 @@ def draw_swimming():
 
 #Drawing the HUD overtop
 def draw_hud(screen):
+    if game_var.game_state == 0:
+        screen.draw.text("SCUBA GAME", (20, 10), color="white", fontsize=60, fontname=game_var.text_font)
+        screen.draw.text("MOVE WITH JOYSTICK.", (20, 70), color="white", fontsize=50, fontname=game_var.text_font)
+        screen.draw.text("SELECT WITH BUTTON.", (20, 120), color="white", fontsize=50, fontname=game_var.text_font)
+        screen.draw.text("PRESS BUTTON WHEN ON", (20, 170), color="white", fontsize=50, fontname=game_var.text_font)
+        screen.draw.text("CENTER POOL TO START.", (20, 220), color="white", fontsize=50, fontname=game_var.text_font)
+        screen.draw.text("USE UPGRADES TO GET", (20, 270), color="white", fontsize=50, fontname=game_var.text_font)
+        screen.draw.text("HIGHER SCORE.", (20, 320), color="white", fontsize=50, fontname=game_var.text_font)
+        screen.draw.text("GET HIGHEST SCORE", (20, 370), color="white", fontsize=50, fontname=game_var.text_font)
+        screen.draw.text("WITHOUT UNDERPAYING", (20, 420), color="white", fontsize=50, fontname=game_var.text_font)
+        screen.draw.text("YOUR EMPOYEES.", (20, 470), color="white", fontsize=50, fontname=game_var.text_font)
+        screen.draw.text("PRESS BUTTON TO START", (20, 520), color="white", fontsize=50, fontname=game_var.text_font)
+
     if game_var.game_state == 1:
         #Displaying the scores in the building state
         screen.draw.text("ROUND: " + str(game_var.round) + "\nSCORE: " + str(game_var.highscore) + "\nMONEY: " + str(game_var.money) + "\nOLD BOTTLES: " + str(game_var.total_old_bottle_count), (20, 20), color=game_var.text_colour, fontsize=text_size, fontname=game_var.text_font)
@@ -203,20 +239,19 @@ def draw_hud(screen):
         if building_player.menu:
              building_player.menu.draw(screen)
     elif game_var.game_state == 2:
-        screen.draw.text(str(game_var.game_timer) + "\n" + str(game_var.bottle_count), (20, 20), color=game_var.text_colour, fontsize=text_size, fontname=game_var.text_font)
+        screen.draw.text(str(game_var.game_timer) + "\n" + str(game_var.bottle_count), (20, 40), color="white", fontsize=50, fontname=game_var.text_font)
     elif game_var.game_state == 3:
         screen.draw.text("YOU LOSE", (20, 20), color=game_var.text_colour, fontsize=text_size, fontname=game_var.text_font)
-    else:
-        screen.draw.text("YOU WIN", (20, 20), color=game_var.text_colour, fontsize=text_size, fontname=game_var.text_font)
+    elif game_var.game_state == 4:
+        screen.draw.text("YOU WIN: " + str(game_var.highscore), (20, 20), color=game_var.text_colour, fontsize=text_size, fontname=game_var.text_font)
 
 #***SWIMMING SCENE***
 
 #ENEMIES
 #Spawns enemies in the swimming scene
 def spawn_enemies():
-    global enemy_timer
-    enemy_timer -= 1
-    if enemy_timer == 0:
+    game_var.enemy_timer -= 1
+    if game_var.enemy_timer == 0:
         left = True
         if random.randint(0, 1) == 1:
             left = False
@@ -226,7 +261,7 @@ def spawn_enemies():
         else:
             enemy = characters.Enemy(8, world_scale, WIDTH, random.randint(0, HEIGHT), False)
         enemies.append(enemy)
-        enemy_timer = enemy_timer_max
+        game_var.enemy_timer = game_var.enemy_timer_max
 
 #If enemy is off screen remove it
 def check_enemy_location():
@@ -260,7 +295,7 @@ def collect_bottle(bottle):
 #Spawn bottles around the game - adds new ones if player collects one
 def spawn_bottles():
     if len(bottles) < game_var.bottle_spawn_amount:
-        bottle_instance = characters.Bottle(world_scale, WIDTH, HEIGHT)
+        bottle_instance = characters.Bottle(world_scale-2, WIDTH, HEIGHT)
         bottles.append(bottle_instance)
 
 #***BUILDING SCENE***
@@ -270,14 +305,13 @@ def check_upgrade_station_collision(using):
     #Check if it hit something
 
     #HIDE PLAYER MENU
-    building_player.show_menu(screen, None)
+    building_player.show_menu(screen, 0)
     for up_station in upgrade_stations:
         if building_player.sprite.colliderect(up_station.sprite):
             if up_station:
                 building_player.show_menu(screen, up_station.value())
             if using:
                 up_station.use()
-
                 current_station_in_use = up_station
                 #Show current status of stations above player
             return
@@ -293,9 +327,11 @@ def on_key_down(key):
             game_var.game_state = 2
         else:
             end_session()
-            game_var.game_state = 1
 
 def buy_button():
+    if game_var.game_state == 0:
+        game_var.game_state = 1
+        return
     check_upgrade_station_collision(True)
 
 def onRedButton_StateChange(self, state):
